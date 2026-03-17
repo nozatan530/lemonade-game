@@ -309,12 +309,18 @@ input:focus,select:focus{outline:none;border-color:var(--accent);}
     <button class="btn btn-p btn-lg btn-full" onclick="startGame()">ゲーム開始 →</button>
 
     <div id="t-links-area" class="hidden" style="margin-top:24px;">
-      <div class="sec">📋 販売チーム用ゲームコード</div>
+      <div class="sec">🎫 参加コード（全チーム共通）</div>
       <div class="info" style="margin-bottom:14px;">
-        <strong>販売チームへの共有方法：</strong>このHTMLファイルを生徒のPC・スマホで開き、「販売チーム」を選択してもらいます。
-        次に下の「ゲームコード」をチャット等で共有し、販売チーム画面の「ゲームコードを入力」に貼り付けてもらいます。
+        <strong>共有方法：</strong>このコードを全員に送るかプロジェクターに映すだけ。
+        販売チームは「販売チーム」を選択 → コード入力 → チーム名を選んで参加します。
       </div>
-      <div id="t-links-list"></div>
+      <div class="card" style="text-align:center;padding:28px 20px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase;">参加コード</div>
+        <div id="t-join-code" style="font-family:'DM Mono',monospace;font-size:42px;font-weight:700;
+          letter-spacing:0.2em;color:var(--accent);margin-bottom:20px;">——</div>
+        <button class="btn btn-p" style="font-size:14px;padding:12px 28px;" onclick="copyJoinCode()">📋 コピー</button>
+      </div>
+      <div id="t-links-list" style="display:none;"></div>
     </div>
   </div>
 
@@ -332,7 +338,10 @@ input:focus,select:focus{outline:none;border-color:var(--accent);}
           <div class="fg"><label>市場の購入予算（円）— この金額分だけ安い順に売れます</label>
             <input type="number" id="t-budget" value="15000" step="500"></div>
           <div class="info" style="margin-bottom:14px;">同価格の場合は先着順（提出順）で処理されます。</div>
-          <button class="btn btn-g btn-lg btn-full" id="t-auction-btn" onclick="runAuction()" disabled>集計実行 →</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-g btn-lg" style="flex:2;" id="t-auction-btn" onclick="runAuction()" disabled>集計実行 →</button>
+            <button class="btn btn-o btn-lg" style="flex:1;font-size:12px;" id="t-force-btn" onclick="forceAuction()">⚡ 強制集計</button>
+          </div>
         </div>
 
       </div>
@@ -399,14 +408,24 @@ input:focus,select:focus{outline:none;border-color:var(--accent);}
 
     <!-- ゲームコード入力（初回） -->
     <div id="s-code-entry">
-      <div class="card">
-        <div class="card-title">ゲームコードを入力</div>
-        <div class="fg"><label>GMから共有されたゲームコードを貼り付けてください</label>
-          <textarea id="s-game-code" rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);
-            border-radius:7px;color:var(--text);padding:10px 12px;font-size:13px;font-family:'DM Mono',monospace;
-            resize:vertical;" placeholder="ゲームコードをここに貼り付け..."></textarea>
+      <!-- Step1: 参加コード入力 -->
+      <div class="card" id="s-step1">
+        <div class="card-title">🎫 参加コードを入力</div>
+        <div class="fg" style="margin-bottom:20px;">
+          <label style="font-size:13px;margin-bottom:8px;display:block;">GMから共有された参加コード（4文字-4文字）</label>
+          <input type="text" id="s-game-code" placeholder="例: ABCD-1234"
+            style="font-size:28px;font-family:'DM Mono',monospace;letter-spacing:0.15em;
+              text-transform:uppercase;text-align:center;padding:16px;"
+            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,'')">
         </div>
-        <button class="btn btn-p btn-full btn-lg" onclick="loadGameCode()">ゲームに参加する →</button>
+        <button class="btn btn-p btn-full btn-lg" onclick="lookupJoinCode()">次へ →</button>
+      </div>
+      <!-- Step2: チーム選択 -->
+      <div class="card hidden" id="s-step2">
+        <div class="card-title">👥 チームを選択してください</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;" id="s-step2-info"></div>
+        <div id="s-team-buttons" style="display:flex;flex-direction:column;gap:10px;"></div>
+        <button class="btn btn-o btn-full" style="margin-top:16px;font-size:12px;" onclick="backToStep1()">← コードを入力し直す</button>
       </div>
     </div>
 
@@ -533,12 +552,14 @@ input:focus,select:focus{outline:none;border-color:var(--accent);}
   <!-- ゲームコード入力 -->
   <div id="aud-code-entry" style="padding:20px;max-width:480px;margin:40px auto 0;">
     <div class="card">
-      <div class="card-title">観戦するゲームのコードを入力</div>
-      <div class="fg">
-        <label>GMから共有されたゲームコード（どのチームのものでもOK）</label>
-        <textarea id="aud-game-code" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);
-          border-radius:7px;color:var(--text);padding:10px 12px;font-size:13px;font-family:'DM Mono',monospace;resize:vertical;"
-          placeholder="ゲームコードを貼り付け..."></textarea>
+      <div class="card-title">👀 参加コードを入力</div>
+      <div class="fg" style="margin-bottom:20px;">
+        <label style="font-size:13px;margin-bottom:8px;display:block;">GMから共有された参加コード（4文字-4文字）</label>
+        <input type="text" id="aud-game-code" placeholder="例: ABCD-1234"
+          style="font-size:28px;font-family:'DM Mono',monospace;letter-spacing:0.15em;
+            text-transform:uppercase;text-align:center;padding:16px;width:100%;
+            background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);"
+          oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,'')">
       </div>
       <button class="btn btn-p btn-full btn-lg" onclick="loadAudienceGame()">観戦を開始する →</button>
     </div>
@@ -625,7 +646,10 @@ input:focus,select:focus{outline:none;border-color:var(--accent);}
         </div>
       </div>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-o" style="font-size:11px;padding:5px 10px;" onclick="hideFinalReport()">← ライブに戻る</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-o" style="font-size:11px;padding:5px 10px;" onclick="hideFinalReport()">← ライブに戻る</button>
+          <button class="btn btn-p" style="font-size:11px;padding:5px 10px;" onclick="goHome()">🏠 ホームへ</button>
+        </div>
       </div>
     </div>
 
@@ -969,17 +993,46 @@ function _unused_buildGameCode(teamName){
   return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
 }
 
+// ゲームIDから短い参加コードを生成（例: LMND-7K2A）
+function buildJoinCode(gameId){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 紛らわしい文字(0,O,1,I)を除外
+  const seed = gameId.replace(/-/g,'');
+  let code = '';
+  for(let i=0;i<8;i++){
+    const c1 = seed.charCodeAt(i*2   % seed.length);
+    const c2 = seed.charCodeAt(i*2+1 % seed.length);
+    code += chars[(c1*31+c2) % chars.length];
+  }
+  return code.slice(0,4)+'-'+code.slice(4);
+}
+
+// Firebaseの全ゲームから参加コードに一致するゲームを検索
+function findGameByJoinCode(joinCode, callback){
+  const normalized = joinCode.replace(/-/g,'').toUpperCase();
+  DB.ref('games').once('value').then(snap=>{
+    const games = snap.val();
+    if(!games){ callback(null, null); return; }
+    for(const [gid, gdata] of Object.entries(games)){
+      if(!gdata || !gdata.teams) continue;
+      const code = buildJoinCode(gid).replace(/-/g,'');
+      if(code === normalized){
+        callback(gid, gdata);
+        return;
+      }
+    }
+    callback(null, null);
+  }).catch(()=>callback(null, null));
+}
+
 function renderLinksArea(){
-  if(!G) return;
-  const html = G.teams.map(t=>{
-    const code = buildGameCode(t.name);
-    return `<div class="card" style="margin-bottom:10px;">
-      <div style="font-weight:700;margin-bottom:8px;">${t.name}</div>
-      <div class="code-box" id="gc-${t.name}" onclick="copyEl(this)" style="margin-bottom:8px;">${code}</div>
-      <button class="btn btn-o" style="font-size:12px;" onclick="copyEl(document.getElementById('gc-${t.name}'))">📋 コードをコピー</button>
-    </div>`;
-  }).join('');
-  document.getElementById('t-links-list').innerHTML = html;
+  if(!G || !GAME_ID) return;
+  const code = buildJoinCode(GAME_ID);
+  document.getElementById('t-join-code').textContent = code;
+}
+
+function copyJoinCode(){
+  const code = document.getElementById('t-join-code').textContent;
+  navigator.clipboard.writeText(code).then(()=>toast('参加コードをコピーしました！'));
 }
 
 // ━━━ GAME MASTER: INPUT TAB ━━━
@@ -1061,6 +1114,32 @@ function listenGame(){
 }
 
 // ━━━ AUCTION ENGINE ━━━
+function forceAuction(){
+  if(!G){ toast('ゲームが開始されていません',true); return; }
+  const subs = G.submissions || {};
+  const notSubmitted = G.teams.filter(t => !(subs[encodeKey(t.name)] || subs[t.name]));
+  if(notSubmitted.length === 0){ runAuction(); return; }
+  const names = notSubmitted.map(t=>t.name).join('、');
+  if(!confirm(`未提出チーム（${names}）を静観扱いにして集計しますか？`)) return;
+  const promises = notSubmitted.map(t=>
+    DB.ref('games/'+GAME_ID+'/submissions/'+encodeKey(t.name)).set({
+      team:t.name, month:G.month, lemonQty:0, sugarQty:0, baristaCount:0,
+      price:0, maxSell:0, isWatching:true, isForced:true, submitOrder:Date.now()
+    })
+  );
+  Promise.all(promises).then(()=>{
+    notSubmitted.forEach(t=>{
+      G.submissions = G.submissions||{};
+      G.submissions[encodeKey(t.name)] = {
+        team:t.name, month:G.month, lemonQty:0, sugarQty:0, baristaCount:0,
+        price:0, maxSell:0, isWatching:true, isForced:true, submitOrder:Date.now()
+      };
+    });
+    toast(`${names} を静観扱いにして集計します`);
+    runAuction();
+  });
+}
+
 function runAuction(){
   if(!G){ toast('ゲームが開始されていません',true); return; }
 
@@ -1805,7 +1884,71 @@ function tTab(name){
 }
 
 // ━━━ SALES TEAM: LOAD CODE ━━━
+
+// Step1: 参加コードでゲームを検索
+function lookupJoinCode(){
+  const raw = document.getElementById('s-game-code').value.trim().replace(/-/g,'').toUpperCase();
+  if(raw.length < 6){ toast('コードを入力してください',true); return; }
+  toast('検索中...');
+  findGameByJoinCode(raw, (gid, gdata)=>{
+    if(!gid || !gdata){
+      toast('コードが見つかりません。GMに確認してください',true);
+      return;
+    }
+    if(!gdata.teams || gdata.teams.length === 0){
+      toast('ゲームデータが見つかりません',true);
+      return;
+    }
+    // Step2: チーム選択画面を表示
+    hide('s-step1');
+    show('s-step2');
+    document.getElementById('s-step2-info').textContent =
+      `ゲーム: 第${gdata.month}月 / ${gdata.teams.length}チーム`;
+    const colors = ['#f5c842','#4ade80','#f97316','#a78bfa','#f472b6','#22d3ee'];
+    document.getElementById('s-team-buttons').innerHTML = gdata.teams.map((t,i)=>{
+      const col = colors[i % colors.length];
+      return `<button
+        style="padding:16px;border-radius:10px;border:2px solid ${col};background:${col}22;
+          color:var(--text);font-size:18px;font-weight:700;cursor:pointer;
+          font-family:'Sora',sans-serif;text-align:left;width:100%;transition:all .15s;"
+        onmouseover="this.style.background='${col}44'"
+        onmouseout="this.style.background='${col}22'"
+        onclick="selectTeam('${gid}','${t.name.replace(/'/g,"\'")}')">
+        <span style="color:${col};margin-right:10px;">●</span>${t.name}
+      </button>`;
+    }).join('');
+  });
+}
+
+function backToStep1(){
+  hide('s-step2');
+  show('s-step1');
+}
+
+// Step2: チームを選んで参加
+function selectTeam(gid, tname){
+  toast('参加中...');
+  DB.ref('games/'+gid).once('value').then(snap=>{
+    const gameData = snap.val();
+    if(!gameData){ toast('ゲームデータが見つかりません',true); return; }
+    const myTeamInit = gameData.teams && gameData.teams.find(t=>t.name===tname);
+    SC = {
+      config: gameData.config,
+      teams: gameData.teams.map(t=>t.name),
+      month: gameData.month,
+      teamName: tname,
+      balance: myTeamInit ? myTeamInit.balance : gameData.config.startFund,
+      stockLemon: myTeamInit ? (myTeamInit.stockLemon||0) : 0,
+      stockSugar: myTeamInit ? (myTeamInit.stockSugar||0) : 0,
+      gameId: gid,
+    };
+    // loadGameCode の後半処理を呼び出す
+    _setupStudentUI(SC, gameData, gid);
+  }).catch(e=>{ toast('接続エラー: '+e.message, true); });
+}
+
 function loadGameCode(){
+  // 旧形式のゲームコード（btoa）にも対応（後方互換）
   const raw = document.getElementById('s-game-code').value.trim();
   if(!raw){ toast('コードを入力してください',true); return; }
   try{
@@ -1814,10 +1957,9 @@ function loadGameCode(){
     if(!parsed.gameId||!parsed.teamName){ throw new Error('invalid'); }
     const gid = parsed.gameId;
     const tname = parsed.teamName;
-    // Firebaseからゲームデータを取得
     DB.ref('games/'+gid).once('value').then(snap=>{
       const gameData = snap.val();
-      if(!gameData){ toast('ゲームが見つかりません。教員にご確認ください',true); return; }
+      if(!gameData){ toast('ゲームが見つかりません',true); return; }
       const myTeamInit = gameData.teams && gameData.teams.find(t=>t.name===tname);
       SC = {
         config: gameData.config,
@@ -1829,6 +1971,14 @@ function loadGameCode(){
         stockSugar: myTeamInit ? (myTeamInit.stockSugar||0) : 0,
         gameId: gid,
       };
+      _setupStudentUI(SC, gameData, gid);
+    }).catch(e=>{ toast('接続エラー: '+e.message, true); });
+  }catch(e){ toast('コードが正しくありません',true); }
+}
+
+// 販売チームUIのセットアップ（参加コード・旧コード共通の後半処理）
+function _setupStudentUI(SC, gameData, gid){
+      const gameData2 = gameData; // エイリアス
 
     // configのサニタイズ：欠損・異常値を安全なデフォルト値で補完
     const C = SC.config;
@@ -1923,11 +2073,6 @@ function loadGameCode(){
           }
         }
       });
-    }).catch(e=>{ toast('接続エラー: '+e.message, true); });
-  }catch(e){
-    console.error('loadGameCode error:', e);
-    toast('コードが正しくありません：' + e.message, true);
-  }
 }
 
 // ━━━ SALES TEAM: RESULT MODAL ━━━
@@ -2478,20 +2623,20 @@ let AUD_CHART_INST = null;
 const AUD_COLORS = ['#f5c842','#4ade80','#f97316','#a78bfa','#f472b6','#22d3ee','#f87171','#34d399'];
 
 function loadAudienceGame(){
-  const raw = document.getElementById('aud-game-code').value.trim();
-  if(!raw){ toast('コードを入力してください',true); return; }
-  try{
-    const json = decodeURIComponent(escape(atob(raw)));
-    const parsed = JSON.parse(json);
-    if(!parsed.gameId){ throw new Error('invalid'); }
-    AUD_GAME_ID = parsed.gameId;
+  const raw = document.getElementById('aud-game-code').value.trim().replace(/-/g,'').toUpperCase();
+  if(raw.length < 6){ toast('コードを入力してください',true); return; }
+  toast('検索中...');
+  findGameByJoinCode(raw, (gid, gdata)=>{
+    if(!gid){
+      toast('コードが見つかりません。GMに確認してください',true);
+      return;
+    }
+    AUD_GAME_ID = gid;
     hide('aud-code-entry');
     show('aud-dashboard');
     toast('観戦を開始します');
     startAudienceListener();
-  }catch(e){
-    toast('コードが正しくありません',true);
-  }
+  });
 }
 
 function startAudienceListener(){
