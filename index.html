@@ -1211,9 +1211,12 @@ function renderInputTab(){
   // 市場予算フォームにその月の自動計算値をセット（まだ集計前の場合のみ）
   const hasResult = Array.isArray(G.history) && G.history.some(h=>h.month===G.month);
   if(!hasResult){
-    const autoB = calcNextMonthValues(G.month, G);
+    // シナリオ優先、なければ自動変動計算
+    const scB = getScenarioMonth(G.month, G);
+    const autoB = scB ? null : calcNextMonthValues(G.month, G);
+    const budget = scB ? scB.marketBudget : (autoB ? autoB.marketBudget : null);
     const bEl = document.getElementById('t-budget');
-    if(bEl) bEl.value = autoB.marketBudget;
+    if(bEl && budget) bEl.value = budget;
   }
 
 
