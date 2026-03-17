@@ -2575,7 +2575,7 @@ function renderAudienceDashboard(gdata){
     const profitColor = (t.totalProfit||0) >= 0 ? 'var(--green)' : 'var(--red)';
     // 提出状況：価格・数量は隠す（ゲームとして公平性を保つ）
     const subStatus = sub
-      ? (sub.isWatching ? '👀 静観' : '✅ 提出完了')
+      ? '✅ 提出完了'
       : '⏳ 入力中...';
     const subColor = sub ? 'var(--green)' : 'var(--muted)';
     return `<div style="border-radius:8px;padding:12px;border-left:3px solid ${col};background:var(--surface2);">
