@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🍋 レモネードスタンド</title>
 
+<!-- ★ GMパスワード設定 ★ -->
+<!-- ここを変更するとGMモードのパスワードが変わります -->
+<script>
+window.GM_PASSWORD = 'lemon2025';
+</script>
+
 <!-- ★ ここにあなたのFirebase設定を貼り付けてください ★ -->
 <script>
 window.FIREBASE_CONFIG = {
@@ -190,10 +196,11 @@ input:focus,select:focus{outline:none;border-color:var(--accent);}
   <div class="mode-title">レモネードスタンド</div>
   <div class="mode-sub">経済学習シミュレーションゲーム</div>
   <div class="mode-cards">
-    <div class="mode-card" onclick="enterMode('teacher')">
+    <div class="mode-card" onclick="enterGMMode()">
       <div class="mode-icon">🎮</div>
       <div class="mode-label">ゲームマスター（GM）</div>
       <div class="mode-desc">ゲーム設定・市場操作・集計管理</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;">🔒 パスワード必要</div>
     </div>
     <div class="mode-card" onclick="enterMode('student')">
       <div class="mode-icon">🧑‍🎮</div>
@@ -745,6 +752,16 @@ function resumeGame(gid){
     document.getElementById('t-links-area').classList.remove('hidden');
     toast(`第${G.month}月 再開`);
   });
+}
+
+function enterGMMode(){
+  const pw = prompt('GMパスワードを入力してください：');
+  if(pw === null) return; // キャンセル
+  if(pw !== (window.GM_PASSWORD || 'lemon2025')){
+    alert('パスワードが違います');
+    return;
+  }
+  enterMode('teacher');
 }
 
 function enterMode(mode){
